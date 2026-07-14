@@ -1,17 +1,22 @@
 import streamlit as st
-from langgraph.checkpoint.sqlite import SqliteSaver
-from langchain_core.messages import HumanMessage, AIMessage
-from app.agent import workflow
 import os
 from dotenv import load_dotenv
+
+# --- Resilience Fix for Memory ---
+try:
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    memory = SqliteSaver.from_conn_string(":memory:")
+except ImportError:
+    from langgraph.checkpoint.memory import MemorySaver
+    memory = MemorySaver()
+
+from langchain_core.messages import HumanMessage, AIMessage
+from app.agent import workflow
 
 # Load environment variables
 load_dotenv()
 
-# Set up LangGraph memory
-memory = SqliteSaver.from_conn_string(":memory:")
-
-# Compile the workflow with memory
+# Compile the workflow with the selected memory saver
 app = workflow.compile(checkpointer=memory)
 
 st.set_page_config(page_title="Scheduling Assistant", page_icon=":calendar:", layout="wide")
@@ -28,13 +33,19 @@ with st.sidebar:
     - Persistent state management
     - Mock notification system
     """)
+    
+    if st.button("Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()
 
 st.title("📅 Multi-Agent Scheduling Assistant")
 st.markdown("---")
 
 # Initialize chat history in session state
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [AIMessage(content="Hello! I'm your scheduling assistant. How can I help you today? You can ask me to:\n\n- **Check availability** for a specific date\n- **Book an appointment** with your preferred date and time\n- **Answer general questions** about scheduling")]
+    st.session_state["messages"] = [
+        AIMessage(content="Hello! I'm your scheduling assistant. How can I help you today? You can ask me to:\n\n- **Check availability** for a specific date\n- **Book an appointment** with your preferred date and time\n- **Answer general questions** about scheduling")
+    ]
 
 if "thread_id" not in st.session_state:
     st.session_state["thread_id"] = "1"
@@ -65,19 +76,25 @@ if prompt := st.chat_input("Type your message here..."):
     # Run the agent with spinner
     with st.spinner("Processing..."):
         try:
-            response = app.invoke(input_messages, config=config)
+            # Get the API Key from environment or Streamlit secrets
+            api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
             
-            # Extract the last message from the agent's response
-            ai_message = response["messages"][-1]
-            
-            # Display assistant response in chat message container
-            with st.chat_message("assistant", avatar="🤖"):
-                st.markdown(ai_message.content)
-            # Add assistant response to chat history
-            st.session_state.messages.append(ai_message)
+            if not api_key:
+                st.error("OpenAI API Key not found. Please add it to your Secrets in Streamlit Cloud.")
+            else:
+                response = app.invoke(input_messages, config=config)
+                
+                # Extract the last message from the agent's response
+                ai_message = response["messages"][-1]
+                
+                # Display assistant response in chat message container
+                with st.chat_message("assistant", avatar="🤖"):
+                    st.markdown(ai_message.content)
+                # Add assistant response to chat history
+                st.session_state.messages.append(ai_message)
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-            st.info("Please ensure your OPENAI_API_KEY is set correctly in the .env file.")
+            st.info("Check your logs for more details.")
 
 # Footer
 st.markdown("---")
