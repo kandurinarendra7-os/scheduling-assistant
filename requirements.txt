@@ -1,6 +1,7 @@
 streamlit
 langgraph
-langchain-core
-langchain-openai
+langchain-groq
 python-dotenv
 requests
+typing-extensions>=4.7.1
+aiosqlite
