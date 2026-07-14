@@ -76,11 +76,11 @@ if prompt := st.chat_input("Type your message here..."):
     # Run the agent with spinner
     with st.spinner("Processing..."):
         try:
-            # Get the API Key from environment or Streamlit secrets
-            api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+            # UPDATED: Check for GROQ_API_KEY instead of OpenAI
+            api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
             
             if not api_key:
-                st.error("OpenAI API Key not found. Please add it to your Secrets in Streamlit Cloud.")
+                st.error("GROQ_API_KEY not found. Please add it to your Secrets in Streamlit Cloud.")
             else:
                 response = app.invoke(input_messages, config=config)
                 
@@ -95,5 +95,3 @@ if prompt := st.chat_input("Type your message here..."):
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
             st.info("Check your logs for more details.")
-
-
