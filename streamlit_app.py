@@ -96,6 +96,4 @@ if prompt := st.chat_input("Type your message here..."):
             st.error(f"An error occurred: {str(e)}")
             st.info("Check your logs for more details.")
 
-# Footer
-st.markdown("---")
-st.markdown("Built with ❤️ using LangGraph and Streamlit")
+
