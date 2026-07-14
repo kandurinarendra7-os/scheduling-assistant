@@ -1,6 +1,7 @@
 # Multi-Agent Scheduling Assistant
 
 A sophisticated scheduling application built with **LangGraph**, **Streamlit**, and **OpenAI** that orchestrates multiple AI agents to handle calendar bookings and appointment management.
+HAVE A LOOK AT MY PROJECT:https://scheduling-assistant-jfewropyhidzvkrmrfxmwd.streamlit.app/
 
 ## 📋 Overview
 
